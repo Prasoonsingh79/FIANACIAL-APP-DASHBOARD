@@ -9,9 +9,9 @@ const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
 
   const links = [
-    { to: '/', name: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'analyst', 'viewer'] },
-    { to: '/transactions', name: 'Transactions', icon: ReceiptText, roles: ['admin', 'analyst'] },
-    { to: '/users', name: 'Users', icon: Users, roles: ['admin'] },
+    { to: '/', name: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'ANALYST', 'VIEWER'] },
+    { to: '/transactions', name: 'Transactions', icon: ReceiptText, roles: ['ADMIN', 'ANALYST'] },
+    { to: '/users', name: 'Users', icon: Users, roles: ['ADMIN'] },
   ];
 
   return (

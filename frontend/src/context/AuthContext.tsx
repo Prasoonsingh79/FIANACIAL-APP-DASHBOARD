@@ -2,10 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface User {
-  _id: string;
+  id: string;
+  _id?: string;
   name: string;
   email: string;
-  role: 'admin' | 'analyst' | 'viewer';
+  role: 'ADMIN' | 'ANALYST' | 'VIEWER';
   token: string;
 }
 
@@ -29,7 +30,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      if (!parsedUser.role) {
+        localStorage.removeItem('user');
+      } else {
+        setUser(parsedUser);
+      }
     }
     setLoading(false);
   }, []);
@@ -38,8 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     try {
       const { data } = await axios.post(`${API_URL}/auth/login`, credentials);
-      setUser(data);
-      localStorage.setItem('user', JSON.stringify(data));
+      const userData = {
+        ...data,
+        id: data.id || data._id
+      };
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
       throw err;

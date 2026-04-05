@@ -17,7 +17,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: string[] }> 
   );
   
   if (!user) return <Navigate to="/login" />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" />;
+  if (roles && !roles.includes(user.role.toUpperCase())) return <Navigate to="/" />;
 
   return (
     <div className="flex bg-[#0f172a] min-h-screen">
