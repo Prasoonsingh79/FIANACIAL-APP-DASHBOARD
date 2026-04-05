@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../config/db';
-import { Role, TransactionType } from '@prisma/client';
+import { PrismaClient, $Enums } from '@prisma/client';
+const Role = $Enums.Role;
+const TransactionType = $Enums.TransactionType;
 import dotenv from 'dotenv';
 
 dotenv.config();

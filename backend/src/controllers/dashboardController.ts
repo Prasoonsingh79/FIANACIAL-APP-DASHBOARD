@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
-import { TransactionType } from '@prisma/client';
+import { $Enums } from '@prisma/client';
+const TransactionType = $Enums.TransactionType;
 import { Prisma } from '@prisma/client';
 
 export const getDashboardSummary = async (req: Request, res: Response) => {

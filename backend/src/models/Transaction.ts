@@ -1,4 +1,6 @@
-import { TransactionType } from '@prisma/client';
+import { $Enums } from '@prisma/client';
+type TransactionType = $Enums.TransactionType;
+const TransactionType = $Enums.TransactionType;
 import prisma from '../config/db';
 
 export { TransactionType };

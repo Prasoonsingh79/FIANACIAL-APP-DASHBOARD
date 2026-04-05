@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+}
 
 :root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -31,7 +34,6 @@ body {
   box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5);
 }
 
-/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -41,12 +43,4 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 10px;
-}
-
-input, select, textarea {
-    @apply bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all;
-}
-
-button {
-    @apply transition-all duration-200 active:scale-[0.98];
 }
