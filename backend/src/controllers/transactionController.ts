@@ -9,7 +9,7 @@ export const createTransactionHandler = async (req: Request, res: Response) => {
     }
 
     const transaction = await createTransaction({
-        amount,
+        amount: Number(amount),
         type: type.toUpperCase() as TransactionType,
         category,
         date: date ? new Date(date) : new Date(),
@@ -44,7 +44,7 @@ export const updateTransactionHandler = async (req: Request, res: Response) => {
     }
 
     const transaction = await updateTransaction(id, {
-        amount: amount ?? existing.amount,
+        amount: amount ? Number(amount) : existing.amount,
         type: type ? type.toUpperCase() as TransactionType : existing.type,
         category: category ?? existing.category,
         date: date ? new Date(date) : existing.date,

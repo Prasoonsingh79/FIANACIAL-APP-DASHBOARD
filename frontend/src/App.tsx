@@ -21,10 +21,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: string[] }> 
   if (roles && !roles.includes(user.role.toUpperCase())) return <Navigate to="/" />;
 
   return (
-    <div className="flex bg-[#0f172a] min-h-screen">
+    <div className="flex min-h-screen bg-slate-950">
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-500/10 via-teal-500/5 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-rose-500/5 via-pink-500/5 to-indigo-500/5 rounded-full blur-3xl"></div>
+      </div>
       <Sidebar />
-      <main className="flex-1 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 filter blur-[120px] pointer-events-none -mr-40 -mt-40 rounded-full"></div>
+      <main className="flex-1 overflow-hidden relative z-10">
         {children}
       </main>
     </div>
@@ -39,8 +43,8 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/transactions" element={<ProtectedRoute roles={['admin', 'analyst']}><Transactions /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute roles={['admin']}><Users /></ProtectedRoute>} />
+          <Route path="/transactions" element={<ProtectedRoute roles={['ADMIN', 'ANALYST']}><Transactions /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute roles={['ADMIN']}><Users /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
