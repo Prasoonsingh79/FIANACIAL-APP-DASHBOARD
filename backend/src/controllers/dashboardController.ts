@@ -1,56 +1,37 @@
 import { Request, Response } from 'express';
-import Transaction, { TransactionType } from '../models/Transaction';
-import mongoose from 'mongoose';
+import prisma from '../config/db';
+import { TransactionType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export const getDashboardSummary = async (req: Request, res: Response) => {
-  const summary = await Transaction.aggregate([
-    {
-      $group: {
-        _id: null,
-        totalIncome: {
-          $sum: {
-            $cond: [{ $eq: ['$type', TransactionType.INCOME] }, '$amount', 0],
-          },
-        },
-        totalExpense: {
-          $sum: {
-            $cond: [{ $eq: ['$type', TransactionType.EXPENSE] }, '$amount', 0],
-          },
-        },
-      },
-    },
-  ]);
+    const summary = await prisma.transaction.groupBy({
+        by: ['type'],
+        _sum: { amount: true },
+    });
 
-  const categoryWiseTotals = await Transaction.aggregate([
-    {
-      $group: {
-        _id: { category: '$category', type: '$type' },
-        total: { $sum: '$amount' },
-      },
-    },
-    { $sort: { total: -1 } },
-  ]);
+    const totalIncome = summary.find(s => s.type === TransactionType.INCOME)?._sum.amount || 0;
+    const totalExpense = summary.find(s => s.type === TransactionType.EXPENSE)?._sum.amount || 0;
 
-  const netBalance = summary.length > 0 ? summary[0].totalIncome - summary[0].totalExpense : 0;
+    const categoryWiseTotals = await prisma.transaction.groupBy({
+        by: ['category', 'type'],
+        _sum: { amount: true },
+        orderBy: { _sum: { amount: 'desc' } },
+    });
 
-  const weeklyTrend = await Transaction.aggregate([
-    {
-      $group: {
-        _id: {
-          week: { $week: '$date' },
-          year: { $year: '$date' },
-          type: '$type',
-        },
-        total: { $sum: '$amount' },
-      },
-    },
-    { $sort: { '_id.year': 1, '_id.week': 1 } },
-  ]);
+    const netBalance = totalIncome - totalExpense;
 
-  res.json({
-    totals: summary[0] || { totalIncome: 0, totalExpense: 0 },
-    netBalance,
-    categoryWiseTotals,
-    weeklyTrend,
-  });
+    const last7Days = new Date();
+    last7Days.setDate(last7Days.getDate() - 7);
+
+    const recentTransactions = await prisma.transaction.findMany({
+        where: { date: { gte: last7Days } },
+        orderBy: { date: 'desc' },
+    });
+
+    res.json({
+        totals: { totalIncome, totalExpense },
+        netBalance,
+        categoryWiseTotals,
+        recentTransactions,
+    });
 };

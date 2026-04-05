@@ -1,78 +1,74 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
-import User, { UserRole, UserStatus } from '../models/User';
+import { createUser, findUserByEmail, matchPassword, getAllUsers, updateUser, Role, Status } from '../models/User';
 
 const generateToken = (id: string) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
-    expiresIn: '30d',
-  });
+    return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
+        expiresIn: '30d',
+    });
 };
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body;
+    const { name, email, password, role } = req.body;
 
-  const userExists = await User.findOne({ email });
+    const userExists = await findUserByEmail(email);
 
-  if (userExists) {
-    return res.status(400).json({ message: 'User already exists' });
-  }
+    if (userExists) {
+        return res.status(400).json({ message: 'User already exists' });
+    }
 
-  const user = await User.create({
-    name,
-    email,
-    password,
-    role: role || UserRole.VIEWER,
-  });
-
-  if (user) {
-    res.status(201).json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user.id),
+    const user = await createUser({
+        name,
+        email,
+        password,
+        role: role?.toUpperCase() || Role.VIEWER,
     });
-  } else {
-    res.status(400).json({ message: 'Invalid user data' });
-  }
+
+    res.status(201).json({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: generateToken(user.id),
+    });
 };
 
 export const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+    const { email, password } = req.body;
+    const user = await findUserByEmail(email);
 
-  if (user && (await user.matchPassword(password))) {
-    if (user.status === UserStatus.INACTIVE) {
-        return res.status(403).json({ message: 'User account is inactive. Please contact support.' });
+    if (user && await matchPassword(password, user.password)) {
+        if (user.status === Status.INACTIVE) {
+            return res.status(403).json({ message: 'User account is inactive. Please contact support.' });
+        }
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user.id),
+        });
+    } else {
+        res.status(401).json({ message: 'Invalid email or password' });
     }
-    res.json({
-      _id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user.id),
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid email or password' });
-  }
 };
 
 export const getUsers = async (req: Request, res: Response) => {
-    const users = await User.find({}).select('-password');
+    const users = await getAllUsers();
     res.json(users);
 };
 
 export const updateUserStatus = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status, role } = req.body;
-    const user = await User.findById(id);
 
-    if (user) {
-        user.status = status || user.status;
-        user.role = role || user.role;
-        const updatedUser = await user.save();
+    try {
+        const updatedUser = await updateUser(id, {
+            status: status?.toUpperCase(),
+            role: role?.toUpperCase(),
+        });
         res.json(updatedUser);
-    } else {
+    } catch (error) {
         res.status(404).json({ message: 'User not found' });
     }
-}
+};

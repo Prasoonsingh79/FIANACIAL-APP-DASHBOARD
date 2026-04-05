@@ -1,47 +1,42 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Role, Status } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import prisma from '../config/db';
 
-export enum UserRole {
-  ADMIN = 'admin',
-  ANALYST = 'analyst',
-  VIEWER = 'viewer',
-}
+export { Role, Status };
 
-export enum UserStatus {
-    ACTIVE = 'active',
-    INACTIVE = 'inactive',
-}
-
-export interface IUser extends Document {
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
-  status: UserStatus;
-  matchPassword(password: string): Promise<boolean>;
-}
-
-const userSchema: Schema = new Schema(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: Object.values(UserRole), default: UserRole.VIEWER },
-    status: { type: String, enum: Object.values(UserStatus), default: UserStatus.ACTIVE },
-  },
-  { timestamps: true }
-);
-
-userSchema.pre<IUser>('save', async function () {
-  if (!this.isModified('password')) {
-    return;
-  }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
-
-userSchema.methods.matchPassword = async function (enteredPassword: string) {
-  return await bcrypt.compare(enteredPassword, this.password);
+export const createUser = async (data: {
+    name: string;
+    email: string;
+    password: string;
+    role?: Role;
+}) => {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    return prisma.user.create({
+        data: {
+            name: data.name,
+            email: data.email,
+            password: hashedPassword,
+            role: data.role || Role.VIEWER,
+        },
+    });
 };
 
-export default mongoose.model<IUser>('User', userSchema);
+export const findUserByEmail = async (email: string) => {
+    return prisma.user.findUnique({ where: { email } });
+};
+
+export const findUserById = async (id: string) => {
+    return prisma.user.findUnique({ where: { id } });
+};
+
+export const matchPassword = async (password: string, hashedPassword: string) => {
+    return bcrypt.compare(password, hashedPassword);
+};
+
+export const getAllUsers = async () => {
+    return prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, status: true, createdAt: true, updatedAt: true } });
+};
+
+export const updateUser = async (id: string, data: { status?: Status; role?: Role }) => {
+    return prisma.user.update({ where: { id }, data });
+};

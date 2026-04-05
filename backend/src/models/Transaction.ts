@@ -1,29 +1,67 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { TransactionType } from '@prisma/client';
+import prisma from '../config/db';
 
-export enum TransactionType {
-  INCOME = 'income',
-  EXPENSE = 'expense',
-}
+export { TransactionType };
 
-export interface ITransaction extends Document {
-  amount: number;
-  type: TransactionType;
-  category: string;
-  date: Date;
-  notes?: string;
-  user: mongoose.Types.ObjectId;
-}
+export const createTransaction = async (data: {
+    amount: number;
+    type: TransactionType;
+    category: string;
+    date?: Date;
+    notes?: string;
+    userId: string;
+}) => {
+    return prisma.transaction.create({
+        data: {
+            amount: data.amount,
+            type: data.type,
+            category: data.category,
+            date: data.date || new Date(),
+            notes: data.notes,
+            userId: data.userId,
+        },
+    });
+};
 
-const transactionSchema: Schema = new Schema(
-  {
-    amount: { type: Number, required: true },
-    type: { type: String, enum: Object.values(TransactionType), required: true },
-    category: { type: String, required: true },
-    date: { type: Date, default: Date.now },
-    notes: { type: String },
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  },
-  { timestamps: true }
-);
+export const getTransactions = async (filters?: {
+    startDate?: Date;
+    endDate?: Date;
+    category?: string;
+    type?: TransactionType;
+}) => {
+    const where: any = {};
+    
+    if (filters?.startDate && filters?.endDate) {
+        where.date = { gte: filters.startDate, lte: filters.endDate };
+    } else if (filters?.startDate) {
+        where.date = { gte: filters.startDate };
+    } else if (filters?.endDate) {
+        where.date = { lte: filters.endDate };
+    }
+    
+    if (filters?.category) where.category = filters.category;
+    if (filters?.type) where.type = filters.type;
 
-export default mongoose.model<ITransaction>('Transaction', transactionSchema);
+    return prisma.transaction.findMany({
+        where,
+        orderBy: { date: 'desc' },
+    });
+};
+
+export const updateTransaction = async (id: string, data: {
+    amount?: number;
+    type?: TransactionType;
+    category?: string;
+    date?: Date;
+    notes?: string;
+}) => {
+    return prisma.transaction.update({ where: { id }, data });
+};
+
+export const deleteTransaction = async (id: string) => {
+    return prisma.transaction.delete({ where: { id } });
+};
+
+export const findTransactionById = async (id: string) => {
+    return prisma.transaction.findUnique({ where: { id } });
+};
